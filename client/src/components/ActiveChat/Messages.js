@@ -8,7 +8,9 @@ const Messages = (props) => {
 
   return (
     <Box>
-      {messages.map((message) => {
+      {messages.map((val, index, arr) => {
+        // Reverse message ordering
+        const message = arr[arr.length - 1 - index];
         const time = moment(message.createdAt).format("h:mm");
 
         return message.senderId === userId ? (

@@ -1,3 +1,26 @@
+
+export const setConversationsInStore = (state, conversations) => {
+  // Set the conversations and keep any conversations that don't have an
+  // id, those conversations will have been added if the search bar or a new
+  // conversation is opened but not started. We don't want to make that dissapear.
+  
+  // Addtionally there is a case where a new conversation will be started
+  // and an entry of the searched user conversation and the new conversation
+  // with the user exists separatly. In this case we want to remove the old
+  // duplicate
+  var convoDupLookup = {}; // fast duplicate checking
+  conversations.push(...(state || []).filter(convo => {
+    let otherUser = convo.otherUser.username;
+    if (convo.id) {
+      convoDupLookup[otherUser] = true;
+      return false;
+    }
+    // Don't include if duplicate
+    return !convoDupLookup[otherUser];
+  }));
+  return conversations;
+}
+
 export const addMessageToStore = (state, payload) => {
   const { message, sender } = payload;
   // if sender isn't null, that means the message needs to be put in a brand new convo

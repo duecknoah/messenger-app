@@ -13,6 +13,13 @@ router.post("/", async (req, res, next) => {
 
     // if we already know conversation id, we can save time and just add it to message and return
     if (conversationId) {
+      // Validate that the user exists in the desired conversation, this is to prevent being able
+      // to send to other conversations they aren't apart of
+      const conv = await Conversation.includingUser(conversationId, senderId);
+      if (conv === null) {
+        throw new Error(`Cannot send message into another conversation`);
+      }
+
       const message = await Message.create({ senderId, text, conversationId });
       return res.json({ message, sender });
     }
