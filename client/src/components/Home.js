@@ -34,15 +34,6 @@ class Home extends Component {
     this.props.fetchConversations();
   }
 
-  componentWillUnmount() {
-    clearTimeout(this.state.pollConvosTimeout);
-  }
-
-  startConversationPolling = async() => {
-    await this.props.fetchConversations();
-    this.state.pollConvosTimeout = setTimeout(this.startConversationPolling, 2500);
-  }
-
   handleLogout = async () => {
     await this.props.logout(this.props.user.id);
   };
