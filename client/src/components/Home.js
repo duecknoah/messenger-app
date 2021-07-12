@@ -19,7 +19,6 @@ class Home extends Component {
     super(props);
     this.state = {
       isLoggedIn: false,
-      pollConvosTimeout: undefined
     };
   }
 
@@ -32,8 +31,7 @@ class Home extends Component {
   }
 
   componentDidMount() {
-    // Begin polling conversation data periodically
-    this.startConversationPolling();
+    this.props.fetchConversations();
   }
 
   componentWillUnmount() {
