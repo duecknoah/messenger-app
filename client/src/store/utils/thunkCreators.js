@@ -5,6 +5,7 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
+  setConversationUnreadCount
 } from "../conversations";
 import { gotUser, setFetchingStatus } from "../user";
 
@@ -77,6 +78,51 @@ export const fetchConversations = () => async (dispatch) => {
     console.error(error);
   }
 };
+
+// Marks if a user has read a specific conversation.
+// Updating the DB directly for permanent storage
+export const saveConversationAsRead = (body) => async (dispatch) => {
+  /* Request format
+  {
+    const reqBody = {
+      conversationId: this.props.conversationId
+    };
+  }*/
+  await axios.post("/api/conversations", body); // Mark as read in DB
+  dispatch(setConversationUnreadCount(body.conversationId, 0)); // reset store unread count
+}
+
+// Sets the new message in store and writes any necessary data like
+// if the user is reading the message in the DB.
+export const handleIncomingNewMessage = (data) => async(dispatch, getState) => {
+    let isActiveConv = false;
+    let state = getState();
+    let convUnreadCnt = 0;
+    for (let conv of state.conversations) {
+      // See if the message conversation is the active conversation
+      // and always mark incoming messages as read in that case
+      if (conv.id === data.message.conversationId) {
+        convUnreadCnt = conv.unreadCnt;
+        
+        if (conv.otherUser.username === state.activeConversation) {
+          isActiveConv = true;
+          break;
+        }
+      }
+    }
+    // Set new message in data store
+    dispatch(setNewMessage(data.message, data.sender));
+    // Set conversation as read in store and DB if its our active conv.
+    // Otherwise append to unread count by one in the store to match with
+    // what is recently already in the DB.
+    if (isActiveConv) {
+      dispatch(saveConversationAsRead({
+        conversationId: data.message.conversationId
+      }));
+    } else {
+      dispatch(setConversationUnreadCount(data.message.conversationId, convUnreadCnt + 1));
+    }
+}
 
 const saveMessage = async (body) => {
   const { data } = await axios.post("/api/messages", body);

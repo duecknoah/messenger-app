@@ -19,7 +19,7 @@ router.get("/", async (req, res, next) => {
           user2Id: userId,
         },
       },
-      attributes: ["id"],
+      attributes: ["id", "user1UnreadCnt", "user2UnreadCnt"],
       order: [[Message, "createdAt", "DESC"]],
       include: [
         { model: Message, order: ["createdAt", "DESC"] },
@@ -56,11 +56,16 @@ router.get("/", async (req, res, next) => {
       // set a property "otherUser" so that frontend will have easier access
       if (convoJSON.user1) {
         convoJSON.otherUser = convoJSON.user1;
+        convoJSON.unreadCnt = convoJSON.user2UnreadCnt;
         delete convoJSON.user1;
       } else if (convoJSON.user2) {
         convoJSON.otherUser = convoJSON.user2;
+        convoJSON.unreadCnt = convoJSON.user1UnreadCnt;
         delete convoJSON.user2;
       }
+      // Don't need to send both unread counts
+      delete convoJSON.user1UnreadCnt;
+      delete convoJSON.user2UnreadCnt;
 
       // set property for online status of the other user
       if (onlineUsers.includes(convoJSON.otherUser.id)) {
@@ -75,6 +80,22 @@ router.get("/", async (req, res, next) => {
     }
 
     res.json(conversations);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Handles writing user unread count data in a conversation (marking as read)
+router.post("/", async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+    const userId = req.user.id;
+    const convId = req.body.conversationId;
+    await Conversation.markAsReadBy(convId, userId);
+
+    res.sendStatus(200);
   } catch (error) {
     next(error);
   }

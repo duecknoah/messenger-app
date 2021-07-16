@@ -21,6 +21,7 @@ router.post("/", async (req, res, next) => {
       }
 
       const message = await Message.create({ senderId, text, conversationId });
+      await Conversation.addUnreadFrom(conv, senderId);
       return res.json({ message, sender });
     }
     // if we don't have conversation id, find a conversation to make sure it doesn't already exist
@@ -44,6 +45,7 @@ router.post("/", async (req, res, next) => {
       text,
       conversationId: conversation.id,
     });
+    await Conversation.addUnreadFrom(conversation, senderId);
     res.json({ message, sender });
   } catch (error) {
     next(error);

@@ -60,6 +60,7 @@ async function seed() {
     senderId: chiumbo.id,
     text: "Sure! What time?",
   });
+  Conversation.addUnreadFrom(chiumboConvo.id, chiumbo.id);
 
   const hualing = await User.create({
     username: "hualing",
@@ -86,6 +87,8 @@ async function seed() {
     senderId: hualing.id,
     text: "😂 😂 😂",
   });
+
+  Conversation.addUnreadFrom(hualingConvo.id, hualing.id, 12);
 
   const otherUsers = await Promise.all([
     ,
