@@ -17,7 +17,7 @@ router.post("/", async (req, res, next) => {
       // to send to other conversations they aren't apart of
       const conv = await Conversation.includingUser(conversationId, senderId);
       if (conv === null) {
-        throw new Error(`Cannot send message into another conversation`);
+        return res.sendStatus(403);
       }
 
       const message = await Message.create({ senderId, text, conversationId });
