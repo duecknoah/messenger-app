@@ -24,12 +24,18 @@ export const addMessageToStore = (state, payload) => {
   });
 };
 
-export const setConversationUnreadCountInStore = (state, payload) => {
-  let { id, count } = payload;
+// Reads messages in store
+export const updateMessagesInStore = (state, payload) => {
+  let { id } = payload;
   return state.map((convo) => {
     if (convo.id === id) {
-      const convoCopy = { ...convo };
-      convoCopy.unreadCnt = count;
+      let convoCopy = { ...convo };
+      // Go through all messages in conversation and if the sender
+      // is our otheruser, mark as read.
+      convoCopy.messages = convoCopy.messages.map(message => {
+        message.isRead = true;
+        return message;
+      });
       return convoCopy;
     }
     return convo;

@@ -5,7 +5,7 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
-  setConversationUnreadCount
+  updateMessages
 } from "../conversations";
 import { gotUser, setFetchingStatus } from "../user";
 
@@ -81,15 +81,16 @@ export const fetchConversations = () => async (dispatch) => {
 
 // Marks if a user has read a specific conversation.
 // Updating the DB directly for permanent storage
-export const saveConversationAsRead = (body) => async (dispatch) => {
+export const markMessagesAsRead = (body) => async (dispatch) => {
   /* Request format
   {
     const reqBody = {
-      conversationId: this.props.conversationId
+      conversation: conversationId,
+      otherUser: otherUser
     };
   }*/
-  await axios.post("/api/conversations", body); // Mark as read in DB
-  dispatch(setConversationUnreadCount(body.conversationId, 0)); // reset store unread count
+  await axios.patch("/api/messages", body); // Mark as read in DB
+  dispatch(updateMessages(body.conversation)); // Mark messages as read for the conversation
 }
 
 // Sets the new message in store and writes any necessary data like
@@ -97,30 +98,25 @@ export const saveConversationAsRead = (body) => async (dispatch) => {
 export const handleIncomingNewMessage = (data) => async(dispatch, getState) => {
     let isActiveConv = false;
     let state = getState();
-    let convUnreadCnt = 0;
+    let otherUser;
     for (let conv of state.conversations) {
       // See if the message conversation is the active conversation
       // and always mark incoming messages as read in that case
-      if (conv.id === data.message.conversationId) {
-        convUnreadCnt = conv.unreadCnt;
-        
-        if (conv.otherUser.username === state.activeConversation) {
-          isActiveConv = true;
-          break;
-        }
+      if (conv.id === data.message.conversationId 
+        && conv.otherUser.username === state.activeConversation) {
+        isActiveConv = true;
+        otherUser = conv.otherUser.id;
+        break;
       }
     }
     // Set new message in data store
     dispatch(setNewMessage(data.message, data.sender));
-    // Set conversation as read in store and DB if its our active conv.
-    // Otherwise append to unread count by one in the store to match with
-    // what is recently already in the DB.
+    // Instantly Mark messages as read if its our active conversation
     if (isActiveConv) {
-      dispatch(saveConversationAsRead({
-        conversationId: data.message.conversationId
+      dispatch(markMessagesAsRead({
+        conversation: data.message.conversationId,
+        otherUser: otherUser
       }));
-    } else {
-      dispatch(setConversationUnreadCount(data.message.conversationId, convUnreadCnt + 1));
     }
 }
 

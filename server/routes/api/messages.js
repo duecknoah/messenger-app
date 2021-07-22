@@ -17,11 +17,10 @@ router.post("/", async (req, res, next) => {
       // to send to other conversations they aren't apart of
       const conv = await Conversation.includingUser(conversationId, senderId);
       if (conv === null) {
-        throw new Error(`Cannot send message into another conversation`);
+        return res.sendStatus(403);
       }
 
       const message = await Message.create({ senderId, text, conversationId });
-      await Conversation.addUnreadFrom(conv, senderId);
       return res.json({ message, sender });
     }
     // if we don't have conversation id, find a conversation to make sure it doesn't already exist
@@ -45,8 +44,36 @@ router.post("/", async (req, res, next) => {
       text,
       conversationId: conversation.id,
     });
-    await Conversation.addUnreadFrom(conversation, senderId);
     res.json({ message, sender });
+  } catch (error) {
+    next(error);
+  }
+});
+
+
+// Handles marking messages as read that are unread
+router.patch("/", async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+    const senderId = req.user.id;
+    const { conversation, otherUser } = req.body;
+
+    // Validate that the conversation exists between the two people 
+    // and matches with our desired id
+    let convoLookup = await Conversation.findConversation(
+      senderId,
+      otherUser
+    );
+    if (convoLookup && convoLookup.id === conversation) {
+      await Message.markAsRead(conversation, otherUser);
+    } else {
+      return res.sendStatus(403); // Cannot mark as read for other people!
+    }
+    
+
+    res.sendStatus(200);
   } catch (error) {
     next(error);
   }
