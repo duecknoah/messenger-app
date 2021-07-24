@@ -3,6 +3,7 @@ import store from "./store";
 import {
   removeOfflineUser,
   addOnlineUser,
+  updateMessages
 } from "./store/conversations";
 import { handleIncomingNewMessage } from "./store/utils/thunkCreators";
 
@@ -20,6 +21,9 @@ socket.on("connect", () => {
   });
   socket.on("new-message", (data) => {
     store.dispatch(handleIncomingNewMessage(data));
+  });
+  socket.on("update-messages", (data) => {
+    store.dispatch(updateMessages(data.conversation, false));
   });
 });
 

@@ -24,16 +24,23 @@ export const addMessageToStore = (state, payload) => {
   });
 };
 
-// Reads messages in store
+// Updates message data for a given conversation and user
+// in the store.
 export const updateMessagesInStore = (state, payload) => {
-  let { id } = payload;
+  let { convId, updateOtherUser } = payload;
   return state.map((convo) => {
-    if (convo.id === id) {
+    if (convo.id === convId) {
       let convoCopy = { ...convo };
       // Go through all messages in conversation and if the sender
       // is our otheruser, mark as read.
       convoCopy.messages = convoCopy.messages.map(message => {
-        message.isRead = true;
+        let isFromOtherUser = message.senderId === convo.otherUser.id;
+
+        // Mark messages from other user if thats what we want (updateOtherUser is True)
+        // Mark messages from self if thats what we want (updateOtherUser is False)
+        if (updateOtherUser === isFromOtherUser) {
+          message.isRead = true;
+        }
         return message;
       });
       return convoCopy;

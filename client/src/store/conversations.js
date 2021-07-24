@@ -69,10 +69,11 @@ export const addConversation = (recipientId, newMessage) => {
   };
 };
 
-export const updateMessages = (id) => {
+// Updates messages for either us or them (otherUser)
+export const updateMessages = (convId, updateOtherUser) => {
   return {
     type: UPDATE_MESSAGES,
-    payload: { id },
+    payload: { convId, updateOtherUser },
   };
 };
 

@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { useMemo } from "react";
 import { Box } from "@material-ui/core";
 import { BadgeAvatar, ChatContent } from "../Sidebar";
 import { withStyles } from "@material-ui/core/styles";
@@ -20,37 +20,35 @@ const styles = {
   },
 };
 
-class Chat extends Component {
-  handleClick = async (conversation) => {
-    await this.props.setActiveChat(conversation.otherUser.username);
-    await this.props.markMessagesAsRead({
+const Chat = (props) => {
+  const { classes } = props;
+  const otherUser = props.conversation.otherUser;
+  const newMessageCount = useMemo(() => props.conversation.messages.filter(message =>
+    !message.isRead && message.senderId === otherUser.id
+  ).length, [props.conversation, otherUser.id]);
+
+  const handleClick = async (conversation) => {
+    await props.setActiveChat(conversation.otherUser.username);
+    await props.markMessagesAsRead({
       conversation: conversation.id,
       otherUser: conversation.otherUser.id
     });
   };
 
-  render() {
-    const { classes } = this.props;
-    const otherUser = this.props.conversation.otherUser;
-    const newMessageCount = this.props.conversation.messages.filter(message => 
-      !message.isRead && message.senderId === otherUser.id
-    ).length;
-
-    return (
-      <Box
-        onClick={() => this.handleClick(this.props.conversation)}
-        className={classes.root}
-      >
-        <BadgeAvatar
-          photoUrl={otherUser.photoUrl}
-          username={otherUser.username}
-          online={otherUser.online}
-          sidebar={true}
-        />
-        <ChatContent conversation={this.props.conversation} newMessageCount={newMessageCount} />
-      </Box>
-    );
-  }
+  return (
+    <Box
+      onClick={() => handleClick(props.conversation)}
+      className={classes.root}
+    >
+      <BadgeAvatar
+        photoUrl={otherUser.photoUrl}
+        username={otherUser.username}
+        online={otherUser.online}
+        sidebar={true}
+      />
+      <ChatContent conversation={props.conversation} newMessageCount={newMessageCount} />
+    </Box>
+  );
 }
 
 const mapDispatchToProps = (dispatch) => {
