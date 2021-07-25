@@ -18,12 +18,23 @@ axios.interceptors.request.use(async function (config) {
 
 // USER THUNK CREATORS
 
+// Authenticate and connect with socket if not already connected
+const socketAuthAndConnect = (token=localStorage.getItem("messenger-token")) => {
+  if (!socket.connected) {
+    socket.auth = { token: token };
+    socket.connect();
+  }
+}
+
 export const fetchUser = () => async (dispatch) => {
   dispatch(setFetchingStatus(true));
   try {
     const { data } = await axios.get("/auth/user");
     dispatch(gotUser(data));
     if (data.id) {
+      // If already logged in, make sure we are connected to web sockets
+      // with our token.
+      socketAuthAndConnect();
       socket.emit("go-online", data.id);
     }
   } catch (error) {
@@ -36,8 +47,9 @@ export const fetchUser = () => async (dispatch) => {
 export const register = (credentials) => async (dispatch) => {
   try {
     const { data } = await axios.post("/auth/register", credentials);
-    await localStorage.setItem("messenger-token", data.token);
+    localStorage.setItem("messenger-token", data.token);
     dispatch(gotUser(data));
+    socketAuthAndConnect();
     socket.emit("go-online", data.id);
   } catch (error) {
     console.error(error);
@@ -48,8 +60,9 @@ export const register = (credentials) => async (dispatch) => {
 export const login = (credentials) => async (dispatch) => {
   try {
     const { data } = await axios.post("/auth/login", credentials);
-    await localStorage.setItem("messenger-token", data.token);
+    localStorage.setItem("messenger-token", data.token);
     dispatch(gotUser(data));
+    socketAuthAndConnect();
     socket.emit("go-online", data.id);
   } catch (error) {
     console.error(error);
