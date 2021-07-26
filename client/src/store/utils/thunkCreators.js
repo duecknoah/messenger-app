@@ -5,6 +5,7 @@ import {
   addConversation,
   setNewMessage,
   setSearchedUsers,
+  updateMessages
 } from "../conversations";
 import { gotUser, setFetchingStatus } from "../user";
 
@@ -77,6 +78,48 @@ export const fetchConversations = () => async (dispatch) => {
     console.error(error);
   }
 };
+
+// Marks if our user has read a specific conversation.
+// Updating the DB directly for permanent storage
+export const markMessagesAsRead = (body) => async (dispatch) => {
+  /* Request format
+  {
+    const reqBody = {
+      conversation: conversationId,
+      otherUser: otherUser
+    };
+  }*/
+  await axios.patch("/api/messages", body); // Mark as read in DB
+  dispatch(updateMessages(body.conversation, true)); // Mark messages as read for the conversation
+  socket.emit("update-messages", body);
+}
+
+// Sets the new message in store and writes any necessary data like
+// if the user is reading the message in the DB.
+export const handleIncomingNewMessage = (data) => async(dispatch, getState) => {
+    let isActiveConv = false;
+    let state = getState();
+    let otherUser;
+    for (let conv of state.conversations) {
+      // See if the message conversation is the active conversation
+      // and always mark incoming messages as read in that case
+      if (conv.id === data.message.conversationId
+        && conv.otherUser.username === state.activeConversation) {
+        isActiveConv = true;
+        otherUser = conv.otherUser.id;
+        break;
+      }
+    }
+    // Set new message in data store
+    dispatch(setNewMessage(data.message, data.sender));
+    // Instantly Mark messages as read if its our active conversation
+    if (isActiveConv) {
+      dispatch(markMessagesAsRead({
+        conversation: data.message.conversationId,
+        otherUser: otherUser
+      }));
+    }
+}
 
 const saveMessage = async (body) => {
   const { data } = await axios.post("/api/messages", body);

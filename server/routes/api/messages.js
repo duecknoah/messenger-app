@@ -50,4 +50,33 @@ router.post("/", async (req, res, next) => {
   }
 });
 
+
+// Handles marking messages as read that are unread
+router.patch("/", async (req, res, next) => {
+  try {
+    if (!req.user) {
+      return res.sendStatus(401);
+    }
+    const senderId = req.user.id;
+    const { conversation, otherUser } = req.body;
+
+    // Validate that the conversation exists between the two people 
+    // and matches with our desired id
+    let convoLookup = await Conversation.findConversation(
+      senderId,
+      otherUser
+    );
+    if (convoLookup && convoLookup.id === conversation) {
+      await Message.markAsRead(conversation, otherUser);
+    } else {
+      return res.sendStatus(403); // Cannot mark as read for other people!
+    }
+    
+
+    res.sendStatus(200);
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;

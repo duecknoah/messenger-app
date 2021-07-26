@@ -1,22 +1,38 @@
 import React from "react";
 import { Box } from "@material-ui/core";
-import { SenderBubble, OtherUserBubble } from "../ActiveChat";
+import { SenderBubble, OtherUserBubble, ReadBubble } from "../ActiveChat";
 import moment from "moment";
 
 const Messages = (props) => {
   const { messages, otherUser, userId } = props;
 
+  const createMessages = () => {
+    let hasPlacedReadBubble = false;
+    let elements = [];
+    messages.forEach((message) => {
+      const time = moment(message.createdAt).format("h:mm");
+      if (message.senderId === userId) {
+        // If this was the most recent unread message by the other, place the read bubble
+        if (!message.isRead && !hasPlacedReadBubble) {
+          hasPlacedReadBubble = true;
+          elements.push(<ReadBubble otherUser={otherUser} />);
+        }
+        elements.push(<SenderBubble key={message.id} text={message.text} time={time} />);
+      } else {
+        elements.push(<OtherUserBubble key={message.id} text={message.text} time={time} otherUser={otherUser} />);
+      }
+    });
+
+    // Push to bottom if other has read all messages
+    if (!hasPlacedReadBubble)
+      elements.push(<ReadBubble otherUser={otherUser} />);
+
+    return elements;
+  }
+
   return (
     <Box>
-      {messages.map((message) => {
-        const time = moment(message.createdAt).format("h:mm");
-
-        return message.senderId === userId ? (
-          <SenderBubble key={message.id} text={message.text} time={time} />
-        ) : (
-          <OtherUserBubble key={message.id} text={message.text} time={time} otherUser={otherUser} />
-        );
-      })}
+      {createMessages()}
     </Box>
   );
 };
