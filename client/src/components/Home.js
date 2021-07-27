@@ -35,31 +35,23 @@ const Home = (props) => {
     await props.logout(props.user.id);
   };
 
-  const render = () => {
-    if (!props.user.id) {
-      // If we were previously logged in, redirect to login instead of register
-      if (isLoggedIn) return <Redirect to="/login" />;
-      return <Redirect to="/register" />;
-    }
-    return (
-      <>
-        {/* logout button will eventually be in a dropdown next to username */}
-        <Button className={classes.logout} onClick={handleLogout}>
-          Logout
-        </Button>
-        <Grid container component="main" className={classes.root}>
-          <CssBaseline />
-          <SidebarContainer />
-          <ActiveChat />
-        </Grid>
-      </>
-    );
+  if (!props.user.id) {
+    // If we were previously logged in, redirect to login instead of register
+    if (isLoggedIn) return <Redirect to="/login" />;
+    return <Redirect to="/register" />;
   }
-
   return (
-    <div>
-      {render()}
-    </div>
+    <>
+      {/* logout button will eventually be in a dropdown next to username */}
+      <Button className={classes.logout} onClick={handleLogout}>
+        Logout
+      </Button>
+      <Grid container component="main" className={classes.root}>
+        <CssBaseline />
+        <SidebarContainer />
+        <ActiveChat />
+      </Grid>
+    </>
   );
 }
 
