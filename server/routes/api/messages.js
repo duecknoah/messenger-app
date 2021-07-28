@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { Conversation, Message } = require("../../db/models");
-const onlineUsers = require("../../onlineUsers");
+const { getSocketFromOnlineUser } = require("../../onlineUsers");
 
 // expects {recipientId, text, conversationId } in body (conversationId will be null if no conversation exists yet)
 router.post("/", async (req, res, next) => {
@@ -35,7 +35,7 @@ router.post("/", async (req, res, next) => {
         user1Id: senderId,
         user2Id: recipientId,
       });
-      if (onlineUsers.includes(sender.id)) {
+      if (getSocketFromOnlineUser(sender.id)) {
         sender.online = true;
       }
     }
@@ -60,7 +60,7 @@ router.patch("/", async (req, res, next) => {
     const senderId = req.user.id;
     const { conversation, otherUser } = req.body;
 
-    // Validate that the conversation exists between the two people 
+    // Validate that the conversation exists between the two people
     // and matches with our desired id
     let convoLookup = await Conversation.findConversation(
       senderId,
@@ -71,7 +71,7 @@ router.patch("/", async (req, res, next) => {
     } else {
       return res.sendStatus(403); // Cannot mark as read for other people!
     }
-    
+
 
     res.sendStatus(200);
   } catch (error) {
