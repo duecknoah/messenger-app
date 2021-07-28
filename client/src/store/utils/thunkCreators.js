@@ -19,7 +19,8 @@ axios.interceptors.request.use(async function (config) {
 // USER THUNK CREATORS
 
 // Authenticate and connect with socket if not already connected
-const socketAuthAndConnect = (token=localStorage.getItem("messenger-token")) => {
+const socketAuthAndConnect = (token) => {
+  token = token ?? localStorage.getItem("messenger-token");
   if (!socket.connected) {
     socket.auth = { token: token };
     socket.connect();
@@ -49,7 +50,7 @@ export const register = (credentials) => async (dispatch) => {
     const { data } = await axios.post("/auth/register", credentials);
     localStorage.setItem("messenger-token", data.token);
     dispatch(gotUser(data));
-    socketAuthAndConnect();
+    socketAuthAndConnect(data.token);
     socket.emit("go-online", data.id);
   } catch (error) {
     console.error(error);
@@ -62,7 +63,7 @@ export const login = (credentials) => async (dispatch) => {
     const { data } = await axios.post("/auth/login", credentials);
     localStorage.setItem("messenger-token", data.token);
     dispatch(gotUser(data));
-    socketAuthAndConnect();
+    socketAuthAndConnect(data.token);
     socket.emit("go-online", data.id);
   } catch (error) {
     console.error(error);
