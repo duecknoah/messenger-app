@@ -15,7 +15,7 @@ const Messages = (props) => {
         // If this was the most recent unread message by the other, place the read bubble
         if (!message.isRead && !hasPlacedReadBubble) {
           hasPlacedReadBubble = true;
-          elements.push(<ReadBubble otherUser={otherUser} />);
+          elements.push(<ReadBubble otherUser={otherUser} key="readbubble" />);
         }
         elements.push(<SenderBubble key={message.id} text={message.text} time={time} />);
       } else {
@@ -25,7 +25,7 @@ const Messages = (props) => {
 
     // Push to bottom if other has read all messages
     if (!hasPlacedReadBubble)
-      elements.push(<ReadBubble otherUser={otherUser} />);
+      elements.push(<ReadBubble otherUser={otherUser} key="readbubble" />);
 
     return elements;
   }
