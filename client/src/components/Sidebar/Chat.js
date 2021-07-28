@@ -1,12 +1,12 @@
 import React, { useMemo } from "react";
 import { Box } from "@material-ui/core";
 import { BadgeAvatar, ChatContent } from "../Sidebar";
-import { withStyles } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
 import { setActiveChat } from "../../store/activeConversation";
 import { markMessagesAsRead } from "../../store/utils/thunkCreators";
-import { connect } from "react-redux";
+import { useDispatch } from "react-redux";
 
-const styles = {
+const useStyles = makeStyles(() => ({
   root: {
     borderRadius: 8,
     height: 80,
@@ -18,21 +18,23 @@ const styles = {
       cursor: "grab",
     },
   },
-};
+}));
 
 const Chat = (props) => {
-  const { classes } = props;
+  const classes = useStyles();
+  const dispatch = useDispatch();
+
   const otherUser = props.conversation.otherUser;
   const newMessageCount = useMemo(() => props.conversation.messages.filter(message =>
     !message.isRead && message.senderId === otherUser.id
   ).length, [props.conversation, otherUser.id]);
 
   const handleClick = async (conversation) => {
-    await props.setActiveChat(conversation.otherUser.username);
-    await props.markMessagesAsRead({
+    dispatch(setActiveChat(conversation.otherUser.username));
+    dispatch(markMessagesAsRead({
       conversation: conversation.id,
       otherUser: conversation.otherUser.id
-    });
+    }));
   };
 
   return (
@@ -51,15 +53,4 @@ const Chat = (props) => {
   );
 }
 
-const mapDispatchToProps = (dispatch) => {
-  return {
-    setActiveChat: (id) => {
-      dispatch(setActiveChat(id));
-    },
-    markMessagesAsRead: (body) => {
-      dispatch(markMessagesAsRead(body));
-    }
-  };
-};
-
-export default connect(null, mapDispatchToProps)(withStyles(styles)(Chat));
+export default Chat;
